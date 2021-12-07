@@ -4,14 +4,16 @@
 
 package frc.robot;
 
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.commands.ArcadeDrive;
 import frc.robot.commands.ArmCommand;
 import frc.robot.commands.AutonomousDistance;
+import frc.robot.commands.AutonomousDistanceByPID;
 import frc.robot.commands.AutonomousTime;
+import frc.robot.commands.TankDrive;
+import frc.robot.commands.YellowOnOff;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.ExternalIO;
 import frc.robot.subsystems.OnBoardIO;
@@ -22,6 +24,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.button.Button;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -37,9 +40,11 @@ public class RobotContainer {
     ExternalMode.PWM, ExternalMode.PWM, ExternalMode.PWM, ExternalMode.AIN, ExternalMode.AIN);
   // Assumes a gamepad plugged into channnel 0
   private final Joystick m_controller = new Joystick(0);
+  private final Joystick m_BunnyVision = new Joystick(1);
 
   // Create SmartDashboard chooser for autonomous routines
   private final SendableChooser<Command> m_chooser = new SendableChooser<>();
+
 
   // The following comment is in the original Romi template.  Please refer to the ExternalIO
   // class for details in using it to access the Romi's EXTn pins.
@@ -70,7 +75,8 @@ public class RobotContainer {
   private void configureButtonBindings() {
     // Default command is arcade drive. This will run unless another command
     // is scheduled over it.
-    m_drivetrain.setDefaultCommand(getArcadeDriveCommand());
+     m_drivetrain.setDefaultCommand(getTankDriveCommand());
+    //m_drivetrain.setDefaultCommand(getArcadeDriveCommand());
 
     // Default command for External I/O runs the arm
     m_externalIO.setDefaultCommand(getArmCommand());
@@ -83,8 +89,16 @@ public class RobotContainer {
 
     //Button xboxBButton = new Button()
 
+    JoystickButton buttonA = new JoystickButton(m_controller, 1);
+    buttonA
+      .whenActive(new YellowOnOff(true, m_onboardIO))
+      .whenInactive(new YellowOnOff(false, m_onboardIO));
+
     // Setup SmartDashboard options
-    m_chooser.setDefaultOption("Auto Routine Distance", new AutonomousDistance(m_drivetrain));
+    // m_chooser.setDefaultOption("Auto Routine Distance by Dead Reckoning", new AutonomousDistance(m_drivetrain));
+    // m_chooser.addOption("Auto Routine Distance by PID", new AutonomousDistanceByPID(m_drivetrain));
+    m_chooser.setDefaultOption("Auto Routine Distance by PID", new AutonomousDistanceByPID(m_drivetrain));
+    m_chooser.addOption("Auto Routine Distance by Dead Reckoning", new AutonomousDistance(m_drivetrain));
     m_chooser.addOption("Auto Routine Time", new AutonomousTime(m_drivetrain));
     SmartDashboard.putData(m_chooser);
   }
@@ -95,8 +109,17 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    return m_chooser.getSelected();
+    return getTankDriveCommand();
+    // return m_chooser.getSelected();
   }
+
+  public Command getTankDriveCommand() {
+    return new TankDrive(
+      m_drivetrain, () -> -m_BunnyVision.getRawAxis(4), 
+      () -> -m_BunnyVision.getRawAxis(1)
+    );
+  }
+ 
 
   /**
    * Use this to pass the teleop command to the main {@link Robot} class.
@@ -105,7 +128,8 @@ public class RobotContainer {
    */
   public Command getArcadeDriveCommand() {
     return new ArcadeDrive(
-        m_drivetrain, () -> -m_controller.getRawAxis(1), () -> m_controller.getRawAxis(0));
+        m_drivetrain, () -> -m_controller.getRawAxis(1)/* - m_BunnyVision.getRawAxis(1)*/, 
+        () -> m_controller.getRawAxis(0)/*+m_BunnyVision.getRawAxis(0)*/);
   }
 
   /**

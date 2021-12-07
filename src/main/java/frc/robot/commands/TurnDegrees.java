@@ -56,6 +56,7 @@ public class TurnDegrees extends CommandBase {
        or 5.551 inches. We then take into consideration the width of the tires.
     */
     double inchPerDegree = Math.PI * 5.551 / 360;
+
     // Compare distance travelled from start to distance based on degree turn
     return getAverageTurningDistance() >= (inchPerDegree * m_degrees);
   }

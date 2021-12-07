@@ -43,7 +43,12 @@ public class Drivetrain extends SubsystemBase {
   }
 
   public void arcadeDrive(double xaxisSpeed, double zaxisRotate) {
+    // System.out.printf("zaxisRotate: %f\n", zaxisRotate);
     m_diffDrive.arcadeDrive(xaxisSpeed, zaxisRotate);
+  }
+
+  public void tankDrive(double leftSpeed, double rightSpeed) {
+    m_diffDrive.tankDrive(leftSpeed, rightSpeed);
   }
 
   public void resetEncoders() {
@@ -122,6 +127,7 @@ public class Drivetrain extends SubsystemBase {
    * @return The current angle of the Romi in degrees
    */
   public double getGyroAngleZ() {
+    // System.out.println(m_gyro.getAngleZ());
     return m_gyro.getAngleZ();
   }
 
